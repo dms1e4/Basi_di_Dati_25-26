@@ -1,0 +1,228 @@
+DROP SCHEMA IF EXISTS ProgettoBD;
+DROP SCHEMA IF EXISTS ProgettoDB;
+CREATE SCHEMA ProgettoBD;
+USE ProgettoBD;
+
+CREATE TABLE Utente (
+    Biografia VARCHAR(250),
+    Nome VARCHAR(30) NOT NULL,
+    Cognome VARCHAR(30) NOT NULL,
+    Email VARCHAR(30) NOT NULL UNIQUE,
+    ID_Utente INT AUTO_INCREMENT PRIMARY KEY,
+    Nazionalità VARCHAR(20)
+);
+
+CREATE TABLE Agenzia (
+    ID_Agenzia INT AUTO_INCREMENT PRIMARY KEY,
+    Nome VARCHAR(50) NOT NULL,
+    Sede VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE Città (
+    ID_Città INT AUTO_INCREMENT PRIMARY KEY,
+    Nome VARCHAR(50) NOT NULL,
+    Regione VARCHAR(30),
+    Nazione VARCHAR(30) NOT NULL
+);
+
+CREATE TABLE Servizio(
+Nome VARCHAR(50) PRIMARY KEY,
+Tipologia VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE Telefono_Utente(
+Numero VARCHAR(15) PRIMARY KEY,
+ID_Utente INT NOT NULL,
+
+FOREIGN KEY (ID_Utente)
+	REFERENCES Utente(ID_Utente)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE
+);
+
+CREATE TABLE Host_(
+ID_Utente INT PRIMARY KEY,
+Tasso_Risposta INT DEFAULT 0,
+Tipo_Host VARCHAR(15) NOT NULL,
+Data_Ottenimento DATE,
+Essere_Superhost BOOLEAN DEFAULT FALSE,
+ID_Agenzia INT, -- nullable --
+
+FOREIGN KEY (ID_Utente)
+	REFERENCES Utente(ID_Utente)
+	ON DELETE CASCADE
+	ON UPDATE CASCADE,
+   
+FOREIGN KEY (ID_Agenzia)
+	REFERENCES Agenzia(ID_Agenzia)
+	ON DELETE CASCADE
+	ON UPDATE CASCADE
+    
+);
+
+CREATE TABLE Contatto_Agenzia(
+Contatto VARCHAR(15) PRIMARY KEY,
+ID_Agenzia INT NOT NULL,
+
+FOREIGN KEY(ID_Agenzia)
+	REFERENCES Agenzia(ID_Agenzia)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);
+
+CREATE TABLE Punto_Di_Interesse(
+Punto VARCHAR(100) NOT NULL,
+ID_Città INT NOT NULL,
+
+PRIMARY KEY (Punto, ID_Città),
+FOREIGN KEY(ID_Città)
+	REFERENCES Città(ID_Città)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);
+
+CREATE TABLE Esperienza(
+ID_Esperienza INT AUTO_INCREMENT PRIMARY KEY,
+Nome VARCHAR(50) NOT NULL,
+Prezzo DECIMAL(10,2) NOT NULL,
+Descrizione VARCHAR(500) NOT NULL,
+Max_Partecipanti INT DEFAULT 1,
+ID_Agenzia INT NOT NULL,
+
+FOREIGN KEY(ID_Agenzia)
+	REFERENCES Agenzia(ID_Agenzia)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);
+
+-- --------------------------------------------------
+
+CREATE TABLE Lingua_Host(
+Lingua VARCHAR(20) NOT NULL,
+ID_Host INT NOT NULL,
+PRIMARY KEY (Lingua, ID_Host),
+
+FOREIGN KEY (ID_Host)
+	REFERENCES Host_(ID_Utente)
+	ON UPDATE CASCADE
+	ON DELETE CASCADE
+);
+
+CREATE TABLE Badge(
+Categoria VARCHAR(15) NOT NULL,
+ID_Host INT NOT NULL,
+
+PRIMARY KEY (Categoria, ID_Host),
+
+FOREIGN KEY(ID_Host)
+	REFERENCES Host_(ID_Utente)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);
+
+CREATE TABLE Alloggio(
+Nome VARCHAR(100) NOT NULL,
+ID_Alloggio INT AUTO_INCREMENT PRIMARY KEY,
+Link VARCHAR(75) NOT NULL,
+Utenze_Comprese BOOLEAN DEFAULT FALSE,
+Bagno_Privato BOOLEAN DEFAULT FALSE,
+Genere_Specifico BOOLEAN DEFAULT FALSE,
+Animali BOOLEAN DEFAULT FALSE,
+Tipologia VARCHAR(20) NOT NULL,
+Locali INT DEFAULT 1,
+Giardino BOOLEAN DEFAULT FALSE,
+Piani INT DEFAULT 1,
+Costo_Notte DECIMAL(10,2),
+Max_Ospiti INT DEFAULT 1,
+Descrizione VARCHAR(500) NOT NULL,
+Metri_Quadri INT NOT NULL,
+N_Civico INT NOT NULL,
+Via VARCHAR(100) NOT NULL,
+
+ID_Host INT NOT NULL,
+ID_Città INT NOT NULL,
+
+FOREIGN KEY (ID_Host)
+	REFERENCES Host_(ID_Utente)
+	ON DELETE CASCADE
+	ON UPDATE CASCADE,
+    
+FOREIGN KEY (ID_Città)
+	REFERENCES Città(ID_Città)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);
+
+CREATE TABLE Acquisto_Esperienza (
+Data_Svolgimento DATE NOT NULL,
+
+ID_Utente INT NOT NULL,
+ID_Esperienza INT NOT NULL,
+
+PRIMARY KEY (ID_Utente, ID_Esperienza, Data_Svolgimento),
+
+FOREIGN KEY (ID_Utente)
+	REFERENCES Utente(ID_Utente)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+    
+FOREIGN KEY (ID_Esperienza)
+	REFERENCES Esperienza(ID_Esperienza)
+	ON DELETE CASCADE
+    ON UPDATE CASCADE
+);
+
+-- ----------------------------------------------------
+CREATE TABLE Offrire_Servizio(
+    Nome_Servizio VARCHAR(50) NOT NULL,
+    ID_Alloggio INT NOT NULL,
+    
+    PRIMARY KEY (ID_Alloggio, Nome_Servizio),
+    
+    FOREIGN KEY (ID_Alloggio) 
+		REFERENCES Alloggio(ID_Alloggio)
+		ON DELETE CASCADE 
+		ON UPDATE CASCADE,
+        
+    FOREIGN KEY (Nome_Servizio) 
+		REFERENCES Servizio(Nome)
+		ON DELETE CASCADE 
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE Prenotazione(
+ID_Prenotazione INT AUTO_INCREMENT PRIMARY KEY,
+Costo_Totale DECIMAL(10,2) NOT NULL,
+Sconto DECIMAL(10,2),
+Data_Inizio DATE NOT NULL,
+Data_Fine DATE NOT NULL,
+Ospiti INT DEFAULT 1,
+
+ID_Utente INT NOT NULL,
+ID_Alloggio INT NOT NULL,
+
+FOREIGN KEY(ID_Utente)
+	REFERENCES Utente(ID_Utente)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+    
+FOREIGN KEY (ID_Alloggio)
+	REFERENCES Alloggio(ID_Alloggio)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+);
+
+CREATE TABLE Recensione(
+ID_Prenotazione INT PRIMARY KEY,
+Descrizione VARCHAR(300) NOT NULL,
+Data_ DATE NOT NULL,
+Qualità INT NOT NULL CHECK(Qualità BETWEEN 1 AND 5),
+Precisione INT NOT NULL CHECK(Precisione BETWEEN 1 AND 5),
+Disponibilità INT NOT NULL CHECK(Disponibilità BETWEEN 1 AND 5),
+Pulizia INT NOT NULL CHECK(Pulizia BETWEEN 1 AND 5),
+
+FOREIGN KEY(ID_Prenotazione)
+REFERENCES Prenotazione(ID_Prenotazione)
+	ON DELETE CASCADE
+	ON UPDATE CASCADE
+);
